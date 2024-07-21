@@ -1,16 +1,15 @@
 namespace mparchin.Client
 {
-    public class ResponseWrapper
+    public class ResponseWrapper(HttpResponseMessage? response = null)
     {
-        public int StatusCode { get; set; }
+        public HttpResponseMessage? Response { get; } = response;
         public TimeSpan Time { get; set; }
         public string? Error { get; set; }
-        public virtual bool HasError => !string.IsNullOrEmpty(Error);
     }
 
-    public class ResponseWrapper<TEntity> : ResponseWrapper where TEntity : class
+    public class ResponseWrapper<TEntity>(HttpResponseMessage? response = null) : ResponseWrapper(response)
+        where TEntity : class
     {
-        public TEntity? Response { get; set; }
-        public override bool HasError => base.HasError || Response is null;
+        public TEntity? Entity { get; set; }
     }
 }

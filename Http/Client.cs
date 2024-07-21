@@ -4,7 +4,11 @@ using System.Net.Http.Json;
 
 namespace mparchin.Client
 {
-    public class QueuedHttpClient(int concurrency) : HttpClient, IQueuedHttpClient
+    public class QueuedHttpClient(int concurrency) : HttpClient(new HttpClientHandler()
+    {
+        AutomaticDecompression = System.Net.DecompressionMethods.All,
+        AllowAutoRedirect = true,
+    }), IQueuedHttpClient
     {
         protected readonly object Lock = new();
         protected readonly ConcurrentDictionary<Guid, Task> Tasks = [];
@@ -18,10 +22,9 @@ namespace mparchin.Client
             try
             {
                 var res = await SendAsync(message);
-                return new()
+                return new(res)
                 {
-                    Response = res.IsSuccessStatusCode ? await res.Content.ReadFromJsonAsync<TEntity>() : null,
-                    StatusCode = (int)res.StatusCode,
+                    Entity = res.IsSuccessStatusCode ? await res.Content.ReadFromJsonAsync<TEntity>() : null,
                     Time = watch.Elapsed,
                     Error = res.IsSuccessStatusCode ? null : await res.Content.ReadAsStringAsync(),
                 };
@@ -30,8 +33,6 @@ namespace mparchin.Client
             {
                 return new()
                 {
-                    Response = null,
-                    StatusCode = 0,
                     Time = watch.Elapsed,
                     Error = $"{ex.Message}\n{ex.Source}\n{ex.StackTrace}",
                 };
@@ -44,9 +45,8 @@ namespace mparchin.Client
             try
             {
                 var res = await SendAsync(message);
-                return new()
+                return new(res)
                 {
-                    StatusCode = (int)res.StatusCode,
                     Time = watch.Elapsed,
                     Error = res.IsSuccessStatusCode ? null : await res.Content.ReadAsStringAsync(),
                 };
@@ -55,7 +55,6 @@ namespace mparchin.Client
             {
                 return new()
                 {
-                    StatusCode = 0,
                     Time = watch.Elapsed,
                     Error = $"{ex.Message}\n{ex.Source}\n{ex.StackTrace}",
                 };
