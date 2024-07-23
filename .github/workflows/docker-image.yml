@@ -25,5 +25,5 @@ jobs:
         context: .
         push: true
         tags: ${{ vars.DOCKER_HUB }}/mparchin/${{ github.repository }}:${{ github.ref_name }},${{ vars.DOCKER_HUB }}/mparchin/${{ github.repository }}:latest
-        cache-from: type=registry,ref=${{ github.repository }}-cache
-        cache-to: type=registry,ref=${{ github.repository }}-cache,mode=max
+        cache-from: type=registry,ref=${{ vars.DOCKER_HUB }}/mparchin/${{ github.repository }}-cache
+        cache-to: type=registry,ref=${{ vars.DOCKER_HUB }}/mparchin/${{ github.repository }}-cache,mode=max
