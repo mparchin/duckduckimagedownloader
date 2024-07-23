@@ -1,16 +1,16 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 using System.Web;
 using duckduckimagedownloader.Model;
 using mparchin.Client;
 
 namespace duckduckimagedownloader
 {
-    public partial class ImageSearch(IRateLimitedQueuedHttpClient client, string imagePath) : IImageSearch
+    public partial class ImageSearch(IRateLimitedQueuedHttpClient rateLimitedClient, IQueuedHttpClient client, string imagePath)
+        : IImageSearch
     {
-        private IRateLimitedQueuedHttpClient Client { get; } = client;
-        private IQueuedHttpClient RateLimitedClient { get; } = client;
+        private IRateLimitedQueuedHttpClient RateLimitedClient { get; } = rateLimitedClient;
+        private IQueuedHttpClient Client { get; } = client;
         private string ImagePath { get; } = imagePath;
 
         private IReadOnlyDictionary<string, string> Headers { get; } = new Dictionary<string, string>()
@@ -80,7 +80,10 @@ namespace duckduckimagedownloader
 
                 var res = await RateLimitedClient.EnqueueSendTimedAsync<SearchResult>(request);
                 if (res.Entity is null || res.Error != null)
+                {
+                    Console.WriteLine(res.Error);
                     return ret;
+                }
 
                 ret.AddRange(res.Entity.Results);
 
@@ -109,7 +112,10 @@ namespace duckduckimagedownloader
                 using var request = new HttpRequestMessage(HttpMethod.Get, url);
                 var res = await Client.EnqueueSendTimedAsync(request);
                 if (res.Response is null || res.Error != null)
+                {
+                    Console.WriteLine(res.Error);
                     return;
+                }
                 var stream = await res.Response.Content.ReadAsStreamAsync();
                 using var fileStream = new FileStream(Path.Combine(basePath, $"{name}.jpg"), FileMode.Create);
                 await stream.CopyToAsync(fileStream);
