@@ -21,8 +21,12 @@ await Task.WhenAll(searches.Distinct().Select(async search =>
     var arr = (search.Contains(',') ? search.Split(',') : [search]).ToList();
 
     arr.Add($"{arr[0]} potted");
+    arr.Add($"{arr[0]} indoor");
     arr.Add($"{arr[0]} leaves");
     arr.Add($"{arr[0]} potted leaves");
+    arr.Add($"{arr[0]} potted indoor");
+    arr.Add($"{arr[0]} leaves indoor");
+    arr.Add($"{arr[0]} potted leaves indoor");
 
     var list = (await Task.WhenAll(arr.Select(query =>
         duck.SearchAsync(query, ENV.ImagesFromEachSearch.Value)))).SelectMany(l => l);
