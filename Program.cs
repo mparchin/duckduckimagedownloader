@@ -31,7 +31,8 @@ await Task.WhenAll(searches.Distinct().Select(async search =>
     var list = (await Task.WhenAll(arr.Select(query =>
         duck.SearchAsync(query, ENV.ImagesFromEachSearch.Value)))).SelectMany(l => l);
 
-    list = list.DistinctBy(l => l.ThumbnailToken)
+    list = list.Where(l => l.Width >= 100 && l.Height >= 100)
+        .DistinctBy(l => l.ThumbnailToken)
         .DistinctBy(l => l.Thumbnail)
         .DistinctBy(l => l.Image)
         .DistinctBy(l => l.ImageToken);

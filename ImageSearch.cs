@@ -41,7 +41,7 @@ namespace duckduckimagedownloader
         private async Task<string> GetTokenAsync(string query)
         {
             var uriBuilder = new UriBuilder(BaseUri);
-            var queries = HttpUtility.ParseQueryString("iar=images&iax=images&ia=images&iaf=layout%3ASquare");
+            var queries = HttpUtility.ParseQueryString("iar=images&iax=images&ia=images");
             queries["q"] = query;
             uriBuilder.Query = queries.ToString();
             using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
@@ -66,7 +66,7 @@ namespace duckduckimagedownloader
             var token = await GetTokenAsync(query);
             var ret = new List<ImageResult>();
             var uriBuilder = new UriBuilder(new Uri(BaseUri, "i.js"));
-            var nextQuery = @"o=json&p=1&f=,,,,layout:Square,&l=us-en";
+            var nextQuery = @"o=json&p=1&f=,,,,,&l=us-en";
 
             while (true)
             {
