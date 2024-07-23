@@ -47,6 +47,6 @@ msbuild.wrn
 .gitignore
 .gitlab-ci.yml
 build.sh
-data/
+Data/
 searchQ
 workingAPI

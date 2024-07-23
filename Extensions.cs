@@ -13,5 +13,6 @@ namespace duckduckimagedownloader
 
         public static string ToJson(this object obj) =>
             JsonSerializer.Serialize(obj, _jsonOptions);
+
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -6,10 +7,11 @@ using mparchin.Client;
 
 namespace duckduckimagedownloader
 {
-    public partial class ImageSearch(IRateLimitedQueuedHttpClient client) : IImageSearch
+    public partial class ImageSearch(IRateLimitedQueuedHttpClient client, string imagePath) : IImageSearch
     {
         private IRateLimitedQueuedHttpClient Client { get; } = client;
         private IQueuedHttpClient RateLimitedClient { get; } = client;
+        private string ImagePath { get; } = imagePath;
 
         private IReadOnlyDictionary<string, string> Headers { get; } = new Dictionary<string, string>()
         {
@@ -89,6 +91,31 @@ namespace duckduckimagedownloader
             }
         }
 
+        private static string ReplaceInvalidChars(string filename)
+        {
+            return string.Join("_", filename.Split(Path.GetInvalidFileNameChars()));
+        }
 
+        public async Task<int> SaveAsync(string path, List<ImageResult> images, Func<ImageResult,
+            (string name, string url)> nameAndUrlSelector)
+        {
+            var basePath = Path.Combine(ImagePath, path);
+            Directory.CreateDirectory(basePath);
+            var count = new ConcurrentBag<string>();
+            await Task.WhenAll(images.Select(async image =>
+            {
+                var (name, url) = nameAndUrlSelector(image);
+                name = ReplaceInvalidChars(name);
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                var res = await Client.EnqueueSendTimedAsync(request);
+                if (res.Response is null || res.Error != null)
+                    return;
+                var stream = await res.Response.Content.ReadAsStreamAsync();
+                using var fileStream = new FileStream(Path.Combine(basePath, $"{name}.jpg"), FileMode.Create);
+                await stream.CopyToAsync(fileStream);
+                count.Add(name);
+            }));
+            return count.Count;
+        }
     }
 }
