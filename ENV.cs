@@ -4,6 +4,8 @@ namespace duckduckimagedownloader
     {
         public static readonly Lazy<int> Concurrency = new(() =>
             Convert.ToInt32(Environment.GetEnvironmentVariable("CONCURRENCY") ?? "20"));
+        public static readonly Lazy<int> RequestRetry = new(() =>
+            Convert.ToInt32(Environment.GetEnvironmentVariable("REQUEST_RETRY") ?? "5"));
         public static readonly Lazy<TimeSpan> RequestPeriod = new(() =>
             TimeSpan.FromMilliseconds(Convert.ToInt32(Environment.GetEnvironmentVariable("REQUEST_PERIOD_MS") ?? "500")));
         public static readonly Lazy<int> ImagesFromEachSearch = new(() =>

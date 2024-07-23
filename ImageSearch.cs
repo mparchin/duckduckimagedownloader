@@ -38,8 +38,9 @@ namespace duckduckimagedownloader
             Headers.ToList().ForEach(header => request.Headers.Add(header.Key, header.Value));
         }
 
-        private async Task<string> GetTokenAsync(string query)
+        private async Task<string> GetTokenAsync(string query, int? retry = null)
         {
+            retry ??= ENV.RequestRetry.Value;
             var uriBuilder = new UriBuilder(BaseUri);
             var queries = HttpUtility.ParseQueryString("iar=images&iax=images&ia=images");
             queries["q"] = query;
@@ -51,6 +52,8 @@ namespace duckduckimagedownloader
             var res = await RateLimitedClient.EnqueueSendTimedAsync(request);
             if (res.Response is null || res.Error != null)
             {
+                if (retry > 0)
+                    return await GetTokenAsync(query, retry - 1);
                 Console.WriteLine(res.Error);
                 return "";
             }
@@ -74,16 +77,10 @@ namespace duckduckimagedownloader
                 queries["q"] = query;
                 queries["vqd"] = token;
                 uriBuilder.Query = queries.ToString();
-                using var request = new HttpRequestMessage(HttpMethod.Get, uriBuilder.Uri);
 
-                AddHeaders(request);
-
-                var res = await RateLimitedClient.EnqueueSendTimedAsync<SearchResult>(request);
+                var res = await SearchSinglePageAsync(uriBuilder.Uri);
                 if (res.Entity is null || res.Error != null)
-                {
-                    Console.WriteLine(res.Error);
                     return ret;
-                }
 
                 ret.AddRange(res.Entity.Results);
 
@@ -92,6 +89,24 @@ namespace duckduckimagedownloader
 
                 nextQuery = res.Entity.Next.Split("?")[1];
             }
+        }
+
+        private async Task<ResponseWrapper<SearchResult>> SearchSinglePageAsync(Uri uri, int? retry = null)
+        {
+            retry ??= ENV.RequestRetry.Value;
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+
+            AddHeaders(request);
+
+            var res = await RateLimitedClient.EnqueueSendTimedAsync<SearchResult>(request);
+            if (res.Entity is null || res.Error != null)
+            {
+                if (retry > 0)
+                    return await SearchSinglePageAsync(uri, retry - 1);
+                Console.WriteLine(res.Error);
+                return res;
+            }
+            return res;
         }
 
         private static string ReplaceInvalidChars(string filename)
@@ -109,19 +124,30 @@ namespace duckduckimagedownloader
             {
                 var (name, url) = nameAndUrlSelector(image);
                 name = ReplaceInvalidChars(name);
-                using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                var res = await Client.EnqueueSendTimedAsync(request);
+                var res = await DownloadImageAsync(url);
                 if (res.Response is null || res.Error != null)
-                {
-                    Console.WriteLine(res.Error);
                     return;
-                }
                 var stream = await res.Response.Content.ReadAsStreamAsync();
                 using var fileStream = new FileStream(Path.Combine(basePath, $"{name}.jpg"), FileMode.Create);
                 await stream.CopyToAsync(fileStream);
                 count.Add(name);
             }));
             return count.Count;
+        }
+
+        private async Task<ResponseWrapper> DownloadImageAsync(string url, int? retry = null)
+        {
+            retry ??= ENV.RequestRetry.Value;
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            var res = await Client.EnqueueSendTimedAsync(request);
+            if (res.Response is null || res.Error != null)
+            {
+                if (retry > 0)
+                    return await DownloadImageAsync(url, retry - 1);
+                Console.WriteLine(res.Error);
+                return res;
+            }
+            return res;
         }
     }
 }
