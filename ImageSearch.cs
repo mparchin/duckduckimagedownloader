@@ -135,6 +135,13 @@ namespace duckduckimagedownloader
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}.jpg"));
                 imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-h.jpg"));
+                imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
+                await Task.WhenAll(new int[] { -4, 2, 4, 2 }.Select(async degree =>
+                {
+                    imageStream.Mutate(x => x.Rotate(degree));
+                    imageStream.Mutate(x => x.Resize(ENV.ImageWidth.Value, ENV.ImageHeight.Value));
+                    await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-{degree}.jpg"));
+                }));
                 count.Add(name);
             }));
             return count.Count;
