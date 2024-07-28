@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Web;
 using duckduckimagedownloader.Model;
 using mparchin.Client;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace duckduckimagedownloader
 {
@@ -128,8 +130,11 @@ namespace duckduckimagedownloader
                 if (res.Response is null || res.Error != null)
                     return;
                 var stream = await res.Response.Content.ReadAsStreamAsync();
-                using var fileStream = new FileStream(Path.Combine(basePath, $"{name}.jpg"), FileMode.Create);
-                await stream.CopyToAsync(fileStream);
+                using var imageStream = await Image.LoadAsync(stream);
+                imageStream.Mutate(x => x.Resize(ENV.ImageWidth.Value, ENV.ImageHeight.Value));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}.jpg"));
+                imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-h.jpg"));
                 count.Add(name);
             }));
             return count.Count;
