@@ -27,12 +27,12 @@ jobs:
         tags: ${{ vars.DOCKER_HUB }}/${{ github.repository }}:${{ github.ref_name }},${{ vars.DOCKER_HUB }}/${{ github.repository }}:latest
         cache-from: type=registry,ref=${{ vars.DOCKER_HUB }}/${{ github.repository }}-cache
         cache-to: type=registry,ref=${{ vars.DOCKER_HUB }}/${{ github.repository }}-cache,mode=max
-    - name: Build && push arm64
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        file: Dockerfile.arm64
-        tags: ${{ vars.DOCKER_HUB }}/${{ github.repository }}:${{ github.ref_name }}-arm64,${{ vars.DOCKER_HUB }}/${{ github.repository }}:latest-arm64
-        cache-from: type=registry,ref=${{ vars.DOCKER_HUB }}/${{ github.repository }}-cache:arm64
-        cache-to: type=registry,ref=${{ vars.DOCKER_HUB }}/${{ github.repository }}-cache:arm64,mode=max
+    # - name: Build && push arm64
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     context: .
+    #     push: true
+    #     file: Dockerfile.arm64
+    #     tags: ${{ vars.DOCKER_HUB }}/${{ github.repository }}:${{ github.ref_name }}-arm64,${{ vars.DOCKER_HUB }}/${{ github.repository }}:latest-arm64
+    #     cache-from: type=registry,ref=${{ vars.DOCKER_HUB }}/${{ github.repository }}-cache:arm64
+    #     cache-to: type=registry,ref=${{ vars.DOCKER_HUB }}/${{ github.repository }}-cache:arm64,mode=max

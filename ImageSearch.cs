@@ -121,28 +121,30 @@ namespace duckduckimagedownloader
         {
             var basePath = Path.Combine(ImagePath, path);
             Directory.CreateDirectory(basePath);
-            var count = new ConcurrentBag<string>();
-            await Task.WhenAll(images.Select(async image =>
+            var flippedImagesMaxIndex = ENV.TotalImagesInQuery.Value - images.Count > images.Count
+                ? images.Count
+                : ENV.TotalImagesInQuery.Value - images.Count;
+            var count = new ConcurrentBag<bool>();
+            await Task.WhenAll(images.Select(async (image, index) =>
             {
                 var (name, url) = nameAndUrlSelector(image);
                 name = ReplaceInvalidChars(name);
                 var res = await DownloadImageAsync(url);
                 if (res.Response is null || res.Error != null)
                     return;
-                var stream = await res.Response.Content.ReadAsStreamAsync();
-                using var imageStream = await Image.LoadAsync(stream);
+                using var imageStream = await Image.LoadAsync(await res.Response.Content.ReadAsStreamAsync());
+
                 imageStream.Mutate(x => x.Resize(ENV.ImageWidth.Value, ENV.ImageHeight.Value));
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}.jpg"));
-                imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
-                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-h.jpg"));
-                imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
-                await Task.WhenAll(new int[] { -4, 2, 4, 2 }.Select(async degree =>
+                count.Add(true);
+
+                if (flippedImagesMaxIndex >= index)
                 {
-                    imageStream.Mutate(x => x.Rotate(degree));
-                    imageStream.Mutate(x => x.Resize(ENV.ImageWidth.Value, ENV.ImageHeight.Value));
-                    await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-{degree}.jpg"));
-                }));
-                count.Add(name);
+                    imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
+                    await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-h.jpg"));
+                    count.Add(true);
+                }
+
             }));
             return count.Count;
         }
