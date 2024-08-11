@@ -121,9 +121,6 @@ namespace duckduckimagedownloader
         {
             var basePath = Path.Combine(ImagePath, path);
             Directory.CreateDirectory(basePath);
-            var flippedImagesMaxIndex = ENV.TotalImagesInQuery.Value - images.Count > images.Count
-                ? images.Count
-                : ENV.TotalImagesInQuery.Value - images.Count;
             var count = new ConcurrentBag<bool>();
             await Task.WhenAll(images.Select(async (image, index) =>
             {
@@ -138,13 +135,25 @@ namespace duckduckimagedownloader
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}.jpg"));
                 count.Add(true);
 
-                if (flippedImagesMaxIndex >= index)
-                {
-                    imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
-                    await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-h.jpg"));
-                    count.Add(true);
-                }
+                imageStream.Mutate(x => x.Rotate(-5));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-5.jpg"));
+                count.Add(true);
 
+                imageStream.Mutate(x => x.Rotate(10));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}+5.jpg"));
+                count.Add(true);
+
+                imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}+5h.jpg"));
+                count.Add(true);
+
+                imageStream.Mutate(x => x.Rotate(-5));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}h.jpg"));
+                count.Add(true);
+
+                imageStream.Mutate(x => x.Rotate(-5));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-5h.jpg"));
+                count.Add(true);
             }));
             return count.Count;
         }
