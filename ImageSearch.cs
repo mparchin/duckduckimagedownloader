@@ -135,7 +135,11 @@ namespace duckduckimagedownloader
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}.jpg"));
                 count.Add(true);
 
-                imageStream.Mutate(x => x.Rotate(-5));
+                imageStream.Mutate(x => x.Rotate(-10));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-10.jpg"));
+                count.Add(true);
+
+                imageStream.Mutate(x => x.Rotate(5));
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-5.jpg"));
                 count.Add(true);
 
@@ -143,7 +147,15 @@ namespace duckduckimagedownloader
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}+5.jpg"));
                 count.Add(true);
 
+                imageStream.Mutate(x => x.Rotate(5));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}+10.jpg"));
+                count.Add(true);
+
                 imageStream.Mutate(x => x.Flip(FlipMode.Horizontal));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}+10h.jpg"));
+                count.Add(true);
+
+                imageStream.Mutate(x => x.Rotate(-5));
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}+5h.jpg"));
                 count.Add(true);
 
@@ -153,6 +165,10 @@ namespace duckduckimagedownloader
 
                 imageStream.Mutate(x => x.Rotate(-5));
                 await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-5h.jpg"));
+                count.Add(true);
+
+                imageStream.Mutate(x => x.Rotate(-5));
+                await imageStream.SaveAsJpegAsync(Path.Combine(basePath, $"{name}-10h.jpg"));
                 count.Add(true);
             }));
             return count.Count;
